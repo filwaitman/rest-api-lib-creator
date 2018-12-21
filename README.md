@@ -3,9 +3,15 @@
 REST API lib creator is a boilerplate-free way for creating libs for RESTful APIs (specially the ones created using [Django REST framework](https://github.com/encode/django-rest-framework) - but certainly adaptable for other frameworks).
 
 **NOTES**:
-1 - This is a port for a personal project I made for myself. It may or may not solve your needs (it solves mine).
-2 - This is still alpha. I opened this on GH just so I can see if this is something I should improve (or not).
+* This is a port for a personal project I made for myself. It may or may not solve your needs (it solves mine).
+* This is still alpha. I opened this on GH just so I can see if this is something I should improve (or not).
 
+
+## Installation:
+
+```bash
+pip install rest-api-lib-creator
+```
 
 ## Examples:
 
