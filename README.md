@@ -26,13 +26,22 @@ class User(ViewsetRestApiLib):
 
 * With this you can play around with your API:
 ```python
-users = User.list()  # Triggers a requests.get with url http://super.cool/api/users
+users = User.list()  # Triggers a requests.get with url=http://super.cool/api/users
 isinstance(users[0], User)
 
 user = User.create(first_name='Filipe', last_name='Waitman', email='filwaitman@gmail.com', photo=open('image.png', 'rb'))  # Triggers a requests.post with url=http://super.cool/api/users and data={'first_name': 'Filipe', 'last_name': 'Waitman', 'email': 'filwaitman@gmail.com'} and files={'photo': <file binary content>}
+
+# Similarly to the call above you could create an empty object and save it:
+user = User()
+user.first_name = 'Filipe'
+user.last_name = 'Waitman'
+user.email = 'filwaitman@gmail.com'
+user.photo = open('image.png', 'rb')
+user.save()  # Triggers a requests.post with url=http://super.cool/api/users and data={'first_name': 'Filipe', 'last_name': 'Waitman', 'email': 'filwaitman@gmail.com'} and files={'photo': <file binary content>}
+
 isinstance(user, User)
-print(user.id)  # prints the user id (assuming the API returned this field)
-print(user.first_name)  # prints the user first name (assuming the API returned this field)
+print(user.id)  # Prints the user id (assuming the API returned this field)
+print(user.first_name)  # )rints the user first name (assuming the API returned this field)
 user.first_name = 'New name'
 user.save()  # Triggers a requests.patch with url=http://super.cool/api/users/<user-id> and data={'first_name': 'New name'}
 
