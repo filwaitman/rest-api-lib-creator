@@ -6,8 +6,6 @@ REST API lib creator is a boilerplate-free way for creating libs for RESTful API
 1 - This is a port for a personal project I made for myself. It may or may not solve your needs (it solves mine).
 2 - This is still alpha. I opened this on GH just so I can see if this is something I should improve (or not).
 
-[Click here]() to see the full documentation.
-
 
 ## Examples:
 
@@ -49,8 +47,7 @@ isinstance(pet, Pet)
 isinstance(pet.owner, User)
 ```
 
-You can see all possible customizations [here](https://github.com/filwaitman/rest-api-lib-creator/rest_api_lib_creator/core.py#L10-L30) (someday I'll improve this doc).
-
+You can see all possible customizations [here](https://github.com/filwaitman/rest-api-lib-creator/blob/master/rest_api_lib_creator/core.py#L10-L30) (someday I'll improve this doc).
 
 ## Special thanks:
 
