@@ -86,7 +86,7 @@ class RestApiLib(object):
             if payload_type in kwargs:
                 # Move files from 'json/data' atribute to 'files' attribute
                 for k, v in kwargs[payload_type].items():
-                    if isinstance(v, IOBase):  # FIXME: py2
+                    if isinstance(v, IOBase):
                         files[k] = v
                 for k in files:
                     kwargs[payload_type].pop(k)
