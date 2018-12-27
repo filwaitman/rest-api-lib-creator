@@ -62,20 +62,20 @@ class RestApiLibTestCase(TestCase):
         self.assertTrue(self.MyLib1.init_existing_object(id='xx')._existing_instance)
 
     def test_call_endpoint(self):
-        mock_response = mock.Mock(json=mock.Mock(return_value={'id': 'xxx', 'name': 'Filipe Waitman'}))
+        response_patched = mock.Mock(json=mock.Mock(return_value={'id': 'xxx', 'name': 'Filipe Waitman'}))
         requests = mock.Mock()
 
-        with mock.patch.object(self.MyLib1, 'request', return_value=mock_response) as mock_request:
+        with mock.patch.object(self.MyLib1, 'request', return_value=response_patched) as request_patched:
             response = self.MyLib1.call_endpoint(requests.get, 'http://super.cool/api')
             self.assertIsInstance(response, mock.Mock)
-            self.assertEqual(response, mock_response)
-            mock_request.assert_called_once_with(requests.get, 'http://super.cool/api')
+            self.assertEqual(response, response_patched)
+            request_patched.assert_called_once_with(requests.get, 'http://super.cool/api')
 
-        with mock.patch.object(self.MyLib1, 'request', return_value=mock_response) as mock_request:
+        with mock.patch.object(self.MyLib1, 'request', return_value=response_patched) as request_patched:
             response = self.MyLib1.call_endpoint(requests.get, 'http://super.cool/api', response_object=self.MyLib1, data={})
             self.assertIsInstance(response, self.MyLib1)
             self.assertTrue(response._existing_instance)
-            mock_request.assert_called_once_with(requests.get, 'http://super.cool/api', data={})
+            request_patched.assert_called_once_with(requests.get, 'http://super.cool/api', data={})
 
     def test_changed_data_new_instance(self):
         lib = self.MyLib1(id='xx', first_name='Filipe')
@@ -152,20 +152,20 @@ class RestApiLibRequestTestCase(TestCase):
         self.MyLib2 = MyLib2
 
     def test_final_request_signature_common(self):
-        mock_response = mock.Mock()
+        response_patched = mock.Mock()
         requests = mock.Mock()
-        requests.get.return_value = mock_response
+        requests.get.return_value = response_patched
 
         response = self.MyLib1.request(requests.get, 'http://super.cool/api')
 
         requests.get.assert_called_once_with('http://super.cool/api', timeout=None, auth=None, headers=None, files=None)
-        self.assertEqual(response, mock_response)
+        self.assertEqual(response, response_patched)
         self.assertTrue(response.raise_for_status.called)
 
     def test_final_request_signature_custom_variables(self):
-        mock_response = mock.Mock()
+        response_patched = mock.Mock()
         requests = mock.Mock()
-        requests.post.return_value = mock_response
+        requests.post.return_value = response_patched
         data = {'key1': 'value1'}
 
         response = self.MyLib2.request(requests.post, 'http://super.cool/api', data=data)
@@ -174,13 +174,13 @@ class RestApiLibRequestTestCase(TestCase):
             'http://super.cool/api', timeout=10, data=data,
             auth=('username', 'password'), headers={'Authorization': 'Token <TOKEN>'}, files=None,
         )
-        self.assertEqual(response, mock_response)
+        self.assertEqual(response, response_patched)
         self.assertTrue(response.raise_for_status.called)
 
     def test_final_request_signature_call_overrides(self):
-        mock_response = mock.Mock()
+        response_patched = mock.Mock()
         requests = mock.Mock()
-        requests.patch.return_value = mock_response
+        requests.patch.return_value = response_patched
         data = {'key1': 'value1'}
 
         response = self.MyLib2.request(requests.patch, 'http://super.cool/api', json=data, _request_kwargs={'timeout': 20})
@@ -189,13 +189,13 @@ class RestApiLibRequestTestCase(TestCase):
             'http://super.cool/api', json=data, timeout=20,
             auth=('username', 'password'), headers={'Authorization': 'Token <TOKEN>'}, files=None,
         )
-        self.assertEqual(response, mock_response)
+        self.assertEqual(response, response_patched)
         self.assertTrue(response.raise_for_status.called)
 
     def test_final_request_signature_convert_rich_objects_from_payload_to_proper_identifiers(self):
-        mock_response = mock.Mock()
+        response_patched = mock.Mock()
         requests = mock.Mock()
-        requests.post.return_value = mock_response
+        requests.post.return_value = response_patched
         data = {
             'key1': 'value1',
             'mylib1': self.MyLib1(id='<mylib1.id>', name='Filipe', email='filipe.w@toptal.com'),
@@ -204,7 +204,7 @@ class RestApiLibRequestTestCase(TestCase):
 
         for payload_type in ('data', 'json'):
             requests.reset_mock()
-            mock_response.reset_mock()
+            response_patched.reset_mock()
             payload_kwargs = {payload_type: {'key1': 'value1', 'mylib1': '<mylib1.id>', 'mylib2': '<mylib2.custom_identifier>'}}
 
             response = self.MyLib2.request(requests.post, 'http://super.cool/api', **{payload_type: data})
@@ -213,20 +213,20 @@ class RestApiLibRequestTestCase(TestCase):
                 'http://super.cool/api', timeout=10, auth=('username', 'password'),
                 headers={'Authorization': 'Token <TOKEN>'}, files=None, **payload_kwargs
             )
-            self.assertEqual(response, mock_response)
+            self.assertEqual(response, response_patched)
             self.assertTrue(response.raise_for_status.called)
 
     def test_final_request_signature_move_file_objects_from_payload_to_files_param(self):
-        mock_response = mock.Mock()
+        response_patched = mock.Mock()
         requests = mock.Mock()
-        requests.post.return_value = mock_response
+        requests.post.return_value = response_patched
 
         for payload_type in ('data', 'json'):
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_file.txt')) as f:
                 data = {'key1': 'value1', 'f': f}
 
                 requests.reset_mock()
-                mock_response.reset_mock()
+                response_patched.reset_mock()
                 payload_kwargs = {payload_type: {'key1': 'value1'}}
 
                 response = self.MyLib2.request(requests.post, 'http://super.cool/api', **{payload_type: data})
@@ -235,7 +235,7 @@ class RestApiLibRequestTestCase(TestCase):
                     'http://super.cool/api', timeout=10, auth=('username', 'password'),
                     headers={'Authorization': 'Token <TOKEN>'}, files={'f': f}, **payload_kwargs
                 )
-                self.assertEqual(response, mock_response)
+                self.assertEqual(response, response_patched)
                 self.assertTrue(response.raise_for_status.called)
 
     def test_request_exception(self):
