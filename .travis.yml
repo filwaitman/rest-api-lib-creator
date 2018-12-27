@@ -1,0 +1,10 @@
+sudo: false
+dist: xenial
+language: python
+install: pip install tox
+script: tox -e lint,$(echo test-py${TRAVIS_PYTHON_VERSION} | sed 's/\.//g')
+python:
+  - 2.7
+  - 3.5
+  - 3.6
+  - 3.7
