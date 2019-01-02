@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/filwaitman/rest-api-lib-creator.svg?branch=master)](https://travis-ci.org/filwaitman/rest-api-lib-creator)
+
 ## REST API lib creator
 
 REST API lib creator is a boilerplate-free way for creating libs for RESTful APIs (specially the ones created using [Django REST framework](https://github.com/encode/django-rest-framework) - but certainly adaptable for other frameworks).
