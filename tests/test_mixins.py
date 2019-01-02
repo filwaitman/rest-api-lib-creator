@@ -139,6 +139,21 @@ class CreateMixinTestCase(TestCase):
         pet.save()
         self.request_patched.assert_called_once_with(requests.post, 'http://super.cool/api/pets', data={'x': 'dog', 'name': 'Luna'})
 
+    def test_save_old_instances_behavior(self):
+        class CreateUpdatePet(CreateMixin, UpdateMixin, RestApiLib):
+            base_api_url = 'http://super.cool/api/pets'
+
+        # If class inherits from UpdateMixin this is a valid operation
+        pet = CreateUpdatePet(_existing_instance=True, id='xyz')
+        pet.name = 'Luna'
+        pet.save()
+        self.request_patched.assert_called_once_with(requests.patch, 'http://super.cool/api/pets/xyz', data={'name': 'Luna'})
+
+        # Otherwise this have to fail
+        pet = self.Pet(_existing_instance=True, id='xyz')
+        pet.name = 'Luna'
+        self.assertRaisesRegexp(NotImplementedError, 'Consider inheriting your base lib class from UpdateMixin.', pet.save)
+
     def test_custom_capabilities(self):
         class CustomPet(CreateMixin, RestApiLib):
             base_api_url = 'http://super.cool/api/pets'

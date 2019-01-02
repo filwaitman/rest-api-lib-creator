@@ -42,7 +42,9 @@ class CreateMixin(object):
         return cls.init_existing_object(**response.json())
 
     def save(self):
-        return self.create(**self._changed_data)
+        if not(self._existing_instance):
+            return self.create(**self._changed_data)
+        return self.update(self.get_identifier(), **self._changed_data)
 
 
 class RetrieveMixin(object):
