@@ -57,8 +57,8 @@ class RetrieveMixin(object):
         return cls.get_instance_url(identifier)
 
     @classmethod
-    def retrieve(cls, identfier):
-        response = cls.request(requests.get, cls.get_retrieve_url(identfier))
+    def retrieve(cls, identifier):
+        response = cls.request(requests.get, cls.get_retrieve_url(identifier))
         return cls.init_existing_object(**response.json())
 
 
@@ -73,9 +73,9 @@ class UpdateMixin(object):
         return cls.get_instance_url(identifier)
 
     @classmethod
-    def update(cls, identfier, **kwargs):
+    def update(cls, identifier, **kwargs):
         outer_kwargs = {cls.update_payload_mode: kwargs}
-        response = cls.request(requests.patch, cls.get_update_url(identfier), **outer_kwargs)
+        response = cls.request(requests.patch, cls.get_update_url(identifier), **outer_kwargs)
         return cls.init_existing_object(**response.json())
 
     def save(self):
@@ -94,8 +94,8 @@ class DeleteMixin(object):
         return cls.get_instance_url(identifier)
 
     @classmethod
-    def delete(cls, identfier):
-        cls.request(requests.delete, cls.get_delete_url(identfier))
+    def delete(cls, identifier):
+        cls.request(requests.delete, cls.get_delete_url(identifier))
 
     def destroy(self):
         return self.delete(self.get_identifier())
