@@ -1,8 +1,8 @@
+from io import IOBase
 
 from requests.exceptions import HTTPError
 
-from .compat import IOBase
-from .mixins import ListMixin, CreateMixin, RetrieveMixin, UpdateMixin, DeleteMixin
+from .mixins import CreateMixin, DeleteMixin, ListMixin, RetrieveMixin, UpdateMixin
 from .utils import should_iterate
 
 

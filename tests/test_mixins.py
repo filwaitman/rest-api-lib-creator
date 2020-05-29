@@ -4,7 +4,7 @@ import mock
 import requests
 
 from rest_api_lib_creator.core import RestApiLib
-from rest_api_lib_creator.mixins import ListMixin, CreateMixin, RetrieveMixin, UpdateMixin, DeleteMixin
+from rest_api_lib_creator.mixins import CreateMixin, DeleteMixin, ListMixin, RetrieveMixin, UpdateMixin
 
 
 class ListMixinTestCase(TestCase):
