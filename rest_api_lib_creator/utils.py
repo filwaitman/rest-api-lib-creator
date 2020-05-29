@@ -1,6 +1,5 @@
 from collections import OrderedDict
-
-from .compat import urlparse, parse_qsl, urlencode, urlunparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 
 def add_querystring_to_url(url, **params):
