@@ -4,7 +4,7 @@ from unittest import TestCase
 import mock
 from requests.exceptions import HTTPError
 
-from rest_api_lib_creator.core import RestApiLib, ViewsetRestApiLib
+from rest_api_lib_creator.core import OnException, RestApiLib, ViewsetRestApiLib
 from rest_api_lib_creator.mixins import CreateMixin, DeleteMixin, ListMixin, RetrieveMixin, UpdateMixin
 
 
@@ -147,9 +147,13 @@ class RestApiLibRequestTestCase(TestCase):
             def handle_request_exception(cls, e, method, url, request_kwargs):
                 raise RuntimeError('API is crappy')
 
+        class MyLib3(RestApiLib):
+            on_exception = OnException.return_response
+
         super(RestApiLibRequestTestCase, self).setUp()
         self.MyLib1 = MyLib1
         self.MyLib2 = MyLib2
+        self.MyLib3 = MyLib3
 
     def test_final_request_signature_common(self):
         response_patched = mock.Mock()
@@ -242,10 +246,12 @@ class RestApiLibRequestTestCase(TestCase):
         requests = mock.Mock(get=mock.Mock(side_effect=HTTPError('', response=mock.Mock(content='Something is not good'))))
         self.assertRaisesRegexp(HTTPError, 'Something is not good', self.MyLib1.request, requests.get, 'http://super.cool/api')
         self.assertRaisesRegexp(RuntimeError, 'API is crappy', self.MyLib2.request, requests.get, 'http://super.cool/api')
+        self.MyLib3.request(requests.get, 'http://super.cool/api')  # nothing raised as on_exception is OnException.return_response
 
         requests = mock.Mock(get=mock.Mock(side_effect=MemoryError('Wow, how did it happen?')))
         self.assertRaisesRegexp(MemoryError, 'Wow, how did it happen?', self.MyLib1.request, requests.get, 'http://super.cool/api')
         self.assertRaisesRegexp(RuntimeError, 'API is crappy', self.MyLib2.request, requests.get, 'http://super.cool/api')
+        self.assertRaisesRegexp(MemoryError, 'Wow, how did it happen?', self.MyLib3.request, requests.get, 'http://super.cool/api')
 
 
 class ViewsetRestApiLibTestCase(TestCase):

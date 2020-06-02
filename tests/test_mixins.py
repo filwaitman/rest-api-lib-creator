@@ -4,6 +4,7 @@ import mock
 import requests
 
 from rest_api_lib_creator.core import RestApiLib
+from rest_api_lib_creator.datastructures import NoContent, UnhandledResponse
 from rest_api_lib_creator.mixins import CreateMixin, DeleteMixin, ListMixin, RetrieveMixin, UpdateMixin
 
 
@@ -26,7 +27,7 @@ class ListMixinTestCase(TestCase):
 
         self.Pet = Pet
         self._request_patched = mock.patch.object(
-            RestApiLib, 'request', return_value=mock.Mock(json=mock.Mock(return_value=self.response_json))
+            RestApiLib, 'request', return_value=mock.Mock(status_code=200, json=mock.Mock(return_value=self.response_json))
         )
         self.request_patched = self._request_patched.start()
 
@@ -51,8 +52,11 @@ class ListMixinTestCase(TestCase):
         self.assertEqual(pets[1].id, 'yy')
         self.assertEqual(pets[1].name, 'Estrela')
 
+        self.assertIsNotNone(pets._meta.request)
+        self.assertIsNotNone(pets._meta.response)
+
     def test_common_response_as_a_plain_list_of_objects(self):
-        self.request_patched.return_value = mock.Mock(json=mock.Mock(return_value=self.response_json['results']))
+        self.request_patched.return_value = mock.Mock(status_code=200, json=mock.Mock(return_value=self.response_json['results']))
 
         pets = self.Pet.list()
 
@@ -81,13 +85,20 @@ class ListMixinTestCase(TestCase):
         response_json['data'] = response_json['results']
         del response_json['results']
 
-        self.request_patched.return_value = mock.Mock(json=mock.Mock(return_value=response_json))
+        self.request_patched.return_value = mock.Mock(status_code=200, json=mock.Mock(return_value=response_json))
 
         pets = CustomPet.list()
 
         self.request_patched.assert_called_once_with(requests.get, 'http://super.cool/api/pets/custom')
         self.assertIsInstance(pets, list)
         self.assertEqual(len(pets), 2)
+
+    def test_unhandled_response(self):
+        self.request_patched.return_value.status_code = 401
+        response = self.Pet.list()
+        self.assertIsInstance(response, UnhandledResponse)
+        self.assertIsNotNone(response._meta.request)
+        self.assertIsNotNone(response._meta.response)
 
 
 class CreateMixinTestCase(TestCase):
@@ -104,7 +115,7 @@ class CreateMixinTestCase(TestCase):
 
         self.Pet = Pet
         self._request_patched = mock.patch.object(
-            RestApiLib, 'request', return_value=mock.Mock(json=mock.Mock(return_value=self.response_json))
+            RestApiLib, 'request', return_value=mock.Mock(status_code=201, json=mock.Mock(return_value=self.response_json))
         )
         self.request_patched = self._request_patched.start()
 
@@ -120,6 +131,8 @@ class CreateMixinTestCase(TestCase):
         self.assertTrue(pet._existing_instance)
         self.assertEqual(pet.id, 'xx')
         self.assertEqual(pet.name, 'Luna')
+        self.assertIsNotNone(pet._meta.request)
+        self.assertIsNotNone(pet._meta.response)
 
     def test_common_via_save(self):
         self.request_patched.reset_mock()
@@ -164,6 +177,13 @@ class CreateMixinTestCase(TestCase):
 
         self.request_patched.assert_called_once_with(requests.post, 'http://super.cool/api/pets/create', json={'name': 'Luna'})
 
+    def test_unhandled_response(self):
+        self.request_patched.return_value.status_code = 400
+        response = self.Pet.create(name='Luna')
+        self.assertIsInstance(response, UnhandledResponse)
+        self.assertIsNotNone(response._meta.request)
+        self.assertIsNotNone(response._meta.response)
+
 
 class RetrieveMixinTestCase(TestCase):
     def setUp(self):
@@ -179,7 +199,7 @@ class RetrieveMixinTestCase(TestCase):
 
         self.Pet = Pet
         self._request_patched = mock.patch.object(
-            RestApiLib, 'request', return_value=mock.Mock(json=mock.Mock(return_value=self.response_json))
+            RestApiLib, 'request', return_value=mock.Mock(status_code=200, json=mock.Mock(return_value=self.response_json))
         )
         self.request_patched = self._request_patched.start()
 
@@ -195,6 +215,8 @@ class RetrieveMixinTestCase(TestCase):
         self.assertTrue(pet._existing_instance)
         self.assertEqual(pet.id, 'xx')
         self.assertEqual(pet.name, 'Luna')
+        self.assertIsNotNone(pet._meta.request)
+        self.assertIsNotNone(pet._meta.response)
 
     def test_custom_capabilities(self):
         class CustomPet(RetrieveMixin, RestApiLib):
@@ -204,6 +226,13 @@ class RetrieveMixinTestCase(TestCase):
         CustomPet.retrieve('xx')
 
         self.request_patched.assert_called_once_with(requests.get, 'http://super.cool/api/pets/get/xx')
+
+    def test_unhandled_response(self):
+        self.request_patched.return_value.status_code = 404
+        response = self.Pet.retrieve('xx')
+        self.assertIsInstance(response, UnhandledResponse)
+        self.assertIsNotNone(response._meta.request)
+        self.assertIsNotNone(response._meta.response)
 
 
 class UpdateMixinTestCase(TestCase):
@@ -220,7 +249,7 @@ class UpdateMixinTestCase(TestCase):
 
         self.Pet = Pet
         self._request_patched = mock.patch.object(
-            RestApiLib, 'request', return_value=mock.Mock(json=mock.Mock(return_value=self.response_json))
+            RestApiLib, 'request', return_value=mock.Mock(status_code=200, json=mock.Mock(return_value=self.response_json))
         )
         self.request_patched = self._request_patched.start()
 
@@ -236,6 +265,8 @@ class UpdateMixinTestCase(TestCase):
         self.assertTrue(pet._existing_instance)
         self.assertEqual(pet.id, 'xx')
         self.assertEqual(pet.name, 'Luna')
+        self.assertIsNotNone(pet._meta.request)
+        self.assertIsNotNone(pet._meta.response)
 
     def test_common_via_save(self):
         pet = self.Pet(id='xx', _existing_instance=True)  # When RetrieveMixin is present this should be like ".retrieve('xx')"
@@ -267,6 +298,13 @@ class UpdateMixinTestCase(TestCase):
 
         self.request_patched.assert_called_once_with(requests.patch, 'http://super.cool/api/pets/update/xx', json={'name': 'Luna'})
 
+    def test_unhandled_response(self):
+        self.request_patched.return_value.status_code = 400
+        response = self.Pet.update('xx', name='Luna')
+        self.assertIsInstance(response, UnhandledResponse)
+        self.assertIsNotNone(response._meta.request)
+        self.assertIsNotNone(response._meta.response)
+
 
 class DeleteMixinTestCase(TestCase):
     def setUp(self):
@@ -279,7 +317,7 @@ class DeleteMixinTestCase(TestCase):
 
         self.Pet = Pet
         self._request_patched = mock.patch.object(
-            RestApiLib, 'request', return_value=mock.Mock(json=mock.Mock(return_value=self.response_json))
+            RestApiLib, 'request', return_value=mock.Mock(status_code=204, json=mock.Mock(return_value=self.response_json))
         )
         self.request_patched = self._request_patched.start()
 
@@ -291,7 +329,9 @@ class DeleteMixinTestCase(TestCase):
         response = self.Pet.delete('xx')
 
         self.request_patched.assert_called_once_with(requests.delete, 'http://super.cool/api/pets/xx')
-        self.assertIsNone(response)
+        self.assertIsInstance(response, NoContent)
+        self.assertIsNotNone(response._meta.request)
+        self.assertIsNotNone(response._meta.response)
 
     def test_common_via_destroy(self):
         pet = self.Pet(id='xx', _existing_instance=True)  # When RetrieveMixin is present this should be like ".retrieve('xx')"
@@ -307,3 +347,10 @@ class DeleteMixinTestCase(TestCase):
         CustomPet.delete('xx')
 
         self.request_patched.assert_called_once_with(requests.delete, 'http://super.cool/api/pets/delete/xx')
+
+    def test_unhandled_response(self):
+        self.request_patched.return_value.status_code = 405
+        response = self.Pet.delete('xx')
+        self.assertIsInstance(response, UnhandledResponse)
+        self.assertIsNotNone(response._meta.request)
+        self.assertIsNotNone(response._meta.response)

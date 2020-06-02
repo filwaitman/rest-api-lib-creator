@@ -64,7 +64,8 @@ isinstance(pet, Pet)
 isinstance(pet.owner, User)
 ```
 
-You can see all possible customizations [here](https://github.com/filwaitman/rest-api-lib-creator/blob/master/rest_api_lib_creator/core.py#L10-L30) (someday I'll improve this doc).
+* See a more complete (and real world) example [here](https://github.com/filwaitman/rest-api-lib-creator/blob/master/example.py)
+* You can see all possible customizations [here](https://github.com/filwaitman/rest-api-lib-creator/blob/master/rest_api_lib_creator/core.py#L22-L50) (someday I'll improve this doc).
 
 ## Special thanks:
 
