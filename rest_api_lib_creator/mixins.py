@@ -1,9 +1,11 @@
 import requests
 
+from .datastructures import Meta, NoContent, UnhandledResponse, metalist
 from .utils import add_querystring_to_url
 
 
 class ListMixin(object):
+    list_expected_status_code = 200
     list_url = None
 
     @classmethod
@@ -21,12 +23,16 @@ class ListMixin(object):
     @classmethod
     def list(cls, **kwargs):
         url = add_querystring_to_url(cls.get_list_url(), **kwargs)
-        objects = cls.get_objects_from_payload(cls.request(requests.get, url).json())
-        return [cls.init_existing_object(**obj) for obj in objects]
+        response = cls.request(requests.get, url)
+        if response.status_code != cls.list_expected_status_code:
+            return UnhandledResponse(meta=Meta(response))
+        objects = cls.get_objects_from_payload(response.json())
+        return metalist([cls.init_existing_object(**obj) for obj in objects], meta=Meta(response))
 
 
 class CreateMixin(object):
     create_payload_mode = 'data'  # 'data or 'json
+    create_expected_status_code = 201
     create_url = None
 
     @classmethod
@@ -39,7 +45,9 @@ class CreateMixin(object):
     def create(cls, **kwargs):
         outer_kwargs = {cls.create_payload_mode: kwargs}
         response = cls.request(requests.post, cls.get_create_url(), **outer_kwargs)
-        return cls.init_existing_object(**response.json())
+        if response.status_code != cls.create_expected_status_code:
+            return UnhandledResponse(meta=Meta(response))
+        return cls.init_existing_object(meta=Meta(response), **response.json())
 
     def save(self):
         if not(self._existing_instance):
@@ -48,6 +56,7 @@ class CreateMixin(object):
 
 
 class RetrieveMixin(object):
+    retrieve_expected_status_code = 200
     retrieve_url = None
 
     @classmethod
@@ -59,11 +68,14 @@ class RetrieveMixin(object):
     @classmethod
     def retrieve(cls, identifier):
         response = cls.request(requests.get, cls.get_retrieve_url(identifier))
-        return cls.init_existing_object(**response.json())
+        if response.status_code != cls.retrieve_expected_status_code:
+            return UnhandledResponse(meta=Meta(response))
+        return cls.init_existing_object(meta=Meta(response), **response.json())
 
 
 class UpdateMixin(object):
     update_payload_mode = 'data'  # 'data or 'json
+    update_expected_status_code = 200
     update_url = None
 
     @classmethod
@@ -76,7 +88,9 @@ class UpdateMixin(object):
     def update(cls, identifier, **kwargs):
         outer_kwargs = {cls.update_payload_mode: kwargs}
         response = cls.request(requests.patch, cls.get_update_url(identifier), **outer_kwargs)
-        return cls.init_existing_object(**response.json())
+        if response.status_code != cls.update_expected_status_code:
+            return UnhandledResponse(meta=Meta(response))
+        return cls.init_existing_object(meta=Meta(response), **response.json())
 
     def save(self):
         if not(self._existing_instance):
@@ -85,6 +99,7 @@ class UpdateMixin(object):
 
 
 class DeleteMixin(object):
+    delete_expected_status_code = 204
     delete_url = None
 
     @classmethod
@@ -95,7 +110,10 @@ class DeleteMixin(object):
 
     @classmethod
     def delete(cls, identifier):
-        cls.request(requests.delete, cls.get_delete_url(identifier))
+        response = cls.request(requests.delete, cls.get_delete_url(identifier))
+        if response.status_code != cls.delete_expected_status_code or (response.status_code != 204):
+            return UnhandledResponse(meta=Meta(response))
+        return NoContent(meta=Meta(response))
 
     def destroy(self):
         return self.delete(self.get_identifier())

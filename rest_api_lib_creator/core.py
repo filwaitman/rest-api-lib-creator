@@ -2,8 +2,20 @@ from io import IOBase
 
 from requests.exceptions import HTTPError
 
-from .mixins import CreateMixin, DeleteMixin, ListMixin, RetrieveMixin, UpdateMixin
+from .mixins import CreateMixin, DeleteMixin, ListMixin, Meta, RetrieveMixin, UpdateMixin
 from .utils import should_iterate
+
+
+class OnException(object):
+    @staticmethod
+    def reraise(exc):
+        raise exc
+
+    @staticmethod
+    def return_response(exc):
+        if hasattr(exc, 'response'):
+            return exc.response
+        return OnException.reraise(exc)
 
 
 class RestApiLib(object):
@@ -20,13 +32,20 @@ class RestApiLib(object):
     request_timeout = None  # None is the default for requests library
     request_auth = None  # None is the default for requests library
 
+    on_exception = OnException.reraise  # OnException.reraise or OnException.return_response or any other callable you want
+
     # Just for quick reference, parameters below can be set for the mixins customization:
+    # list_expected_status_code
     # list_url
     # create_payload_mode
+    # create_expected_status_code
     # create_url
+    # retrieve_expected_status_code
     # retrieve_url
     # update_payload_mode
+    # update_expected_status_code
     # update_url
+    # delete_expected_status_code
     # delete_url
 
     @classmethod
@@ -73,9 +92,10 @@ class RestApiLib(object):
     def handle_request_exception(cls, e, method, url, request_kwargs):
         response = getattr(e, 'response', None)
         if isinstance(e, HTTPError) and (response is not None):
-            raise HTTPError(response.content, response=response)
-
-        raise e
+            exc = HTTPError(response.content, response=response)
+        else:
+            exc = e
+        return cls.on_exception(exc)
 
     @classmethod
     def prepare_requests_call(cls, **kwargs):
@@ -126,10 +146,11 @@ class RestApiLib(object):
 
         response = cls.request(method, url, **outer_kwargs)
         if response_object:
-            return response_object.init_existing_object(**response.json())
+            return response_object.init_existing_object(meta=Meta(response), **response.json())
         return response
 
     def __init__(self, **kwargs):
+        self._meta = kwargs.pop('meta', None)
         self._existing_instance = kwargs.pop('_existing_instance', False)
         self._track_object_changes = not(self._existing_instance)
         self._nested_objects = self.nested_objects or {}
