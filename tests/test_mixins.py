@@ -6,6 +6,7 @@ import requests
 from rest_api_lib_creator.core import RestApiLib
 from rest_api_lib_creator.datastructures import NoContent, UnhandledResponse
 from rest_api_lib_creator.mixins import CreateMixin, DeleteMixin, ListMixin, RetrieveMixin, UpdateMixin
+from rest_api_lib_creator.pagination_classes import NoPagination
 
 
 class ListMixinTestCase(TestCase):
@@ -56,9 +57,12 @@ class ListMixinTestCase(TestCase):
         self.assertIsNotNone(pets._meta.response)
 
     def test_common_response_as_a_plain_list_of_objects(self):
+        class PetNoPagination(self.Pet):
+            pagination_class = NoPagination
+
         self.request_patched.return_value = mock.Mock(status_code=200, json=mock.Mock(return_value=self.response_json['results']))
 
-        pets = self.Pet.list()
+        pets = PetNoPagination.list()
 
         self.assertIsInstance(pets, list)
         self.assertEqual(len(pets), 2)

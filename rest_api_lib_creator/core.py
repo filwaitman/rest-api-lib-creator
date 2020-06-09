@@ -2,7 +2,9 @@ from io import IOBase
 
 from requests.exceptions import HTTPError
 
-from .mixins import CreateMixin, DeleteMixin, ListMixin, Meta, RetrieveMixin, UpdateMixin
+from .datastructures import Meta, metalist
+from .mixins import CreateMixin, DeleteMixin, ListMixin, RetrieveMixin, UpdateMixin
+from .pagination_classes import DRFPageNumberPagination
 from .utils import should_iterate
 
 
@@ -33,6 +35,8 @@ class RestApiLib(object):
     request_auth = None  # None is the default for requests library
 
     on_exception = OnException.reraise  # OnException.reraise or OnException.return_response or any other callable you want
+
+    pagination_class = DRFPageNumberPagination
 
     # Just for quick reference, parameters below can be set for the mixins customization:
     # list_expected_status_code
@@ -142,12 +146,27 @@ class RestApiLib(object):
 
     @classmethod
     def call_endpoint(cls, method, url, **outer_kwargs):
-        response_object = outer_kwargs.pop('response_object', None)
+        instance_class = outer_kwargs.pop('instance_class', None)
+        many = outer_kwargs.pop('many', False)
 
         response = cls.request(method, url, **outer_kwargs)
-        if response_object:
-            return response_object.init_existing_object(meta=Meta(response), **response.json())
+        if instance_class:
+            return cls.prepare_response(response, instance_class, many=many)
         return response
+
+    @classmethod
+    def get_objects_from_payload(cls, json_response):
+        return cls.pagination_class().get_results(json_response)
+
+    @classmethod
+    def prepare_response(cls, response, instance_class, many=False):
+        json_response = response.json()
+
+        if many:
+            objects = cls.get_objects_from_payload(json_response)
+            return metalist([instance_class.init_existing_object(**obj) for obj in objects], meta=Meta(response))
+
+        return instance_class.init_existing_object(meta=Meta(response=response), **json_response)
 
     def __init__(self, **kwargs):
         self._meta = kwargs.pop('meta', None)

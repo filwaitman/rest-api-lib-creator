@@ -1,18 +1,12 @@
 import requests
 
-from .datastructures import Meta, NoContent, UnhandledResponse, metalist
+from .datastructures import Meta, NoContent, UnhandledResponse
 from .utils import add_querystring_to_url
 
 
 class ListMixin(object):
     list_expected_status_code = 200
     list_url = None
-
-    @classmethod
-    def get_objects_from_payload(cls, payload):
-        if 'results' in payload:  # DRF default
-            return payload['results']
-        return payload
 
     @classmethod
     def get_list_url(cls):
@@ -26,8 +20,7 @@ class ListMixin(object):
         response = cls.request(requests.get, url)
         if response.status_code != cls.list_expected_status_code:
             return UnhandledResponse(meta=Meta(response))
-        objects = cls.get_objects_from_payload(response.json())
-        return metalist([cls.init_existing_object(**obj) for obj in objects], meta=Meta(response))
+        return cls.prepare_response(response, cls, many=True)
 
 
 class CreateMixin(object):
@@ -47,7 +40,7 @@ class CreateMixin(object):
         response = cls.request(requests.post, cls.get_create_url(), **outer_kwargs)
         if response.status_code != cls.create_expected_status_code:
             return UnhandledResponse(meta=Meta(response))
-        return cls.init_existing_object(meta=Meta(response), **response.json())
+        return cls.prepare_response(response, cls)
 
     def save(self):
         if not(self._existing_instance):
@@ -70,7 +63,7 @@ class RetrieveMixin(object):
         response = cls.request(requests.get, cls.get_retrieve_url(identifier))
         if response.status_code != cls.retrieve_expected_status_code:
             return UnhandledResponse(meta=Meta(response))
-        return cls.init_existing_object(meta=Meta(response), **response.json())
+        return cls.prepare_response(response, cls)
 
 
 class UpdateMixin(object):
@@ -90,7 +83,7 @@ class UpdateMixin(object):
         response = cls.request(requests.patch, cls.get_update_url(identifier), **outer_kwargs)
         if response.status_code != cls.update_expected_status_code:
             return UnhandledResponse(meta=Meta(response))
-        return cls.init_existing_object(meta=Meta(response), **response.json())
+        return cls.prepare_response(response, cls)
 
     def save(self):
         if not(self._existing_instance):

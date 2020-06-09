@@ -72,7 +72,7 @@ class RestApiLibTestCase(TestCase):
             request_patched.assert_called_once_with(requests.get, 'http://super.cool/api')
 
         with mock.patch.object(self.MyLib1, 'request', return_value=response_patched) as request_patched:
-            response = self.MyLib1.call_endpoint(requests.get, 'http://super.cool/api', response_object=self.MyLib1, data={})
+            response = self.MyLib1.call_endpoint(requests.get, 'http://super.cool/api', instance_class=self.MyLib1, data={})
             self.assertIsInstance(response, self.MyLib1)
             self.assertTrue(response._existing_instance)
             request_patched.assert_called_once_with(requests.get, 'http://super.cool/api', data={})
